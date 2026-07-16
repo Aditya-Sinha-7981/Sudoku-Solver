@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import pytesseract
 
 # ------------------------------------------------------------
 # functions
@@ -62,8 +63,7 @@ def get_grid(board, cell_size):
             white_Pixels = cv2.countNonZero(cell)
             white_ratio = white_Pixels / cell.size #getting ratio of white pixels so it becomes dynamic
             if white_ratio < 0.95:
-                number = 1
-                pass #todo: add OCR for number
+                number = (get_digit(cell)).strip()
             else:
                 number = 0
             row_values.append(number)
@@ -72,6 +72,7 @@ def get_grid(board, cell_size):
 
 
 def get_digit(cell):
-    pass
+    extracted_num = pytesseract.image_to_string(cell, config="--psm 6 -c tessedit_char_whitelist=123456789")
+    return extracted_num
 
 # ------------------------------------------------------------
