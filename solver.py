@@ -1,6 +1,6 @@
 import numpy as np
 
-GRID = [
+SUDOKU_GRID = [
     [0,0,8,0,0,0,0,1,6],
     [5,0,0,0,9,2,0,0,8],
     [0,0,0,1,0,0,0,0,0],
@@ -12,14 +12,13 @@ GRID = [
     [1,6,0,0,0,0,7,0,0]
 ]
 
-def is_valid(row, col, number):
-    global GRID
+def is_valid(grid, row, col, number):
     for i in range(9):
-        if number == GRID[row][i]:
+        if number == grid[row][i]:
             return False
 
     for j in range(9):
-        if number == GRID[j][col]:
+        if number == grid[j][col]:
             return False
 
     box_row_index = (row // 3) * 3
@@ -27,27 +26,28 @@ def is_valid(row, col, number):
 
     for i in range(box_row_index, box_row_index+3):
         for j in range(box_col_index, box_col_index+3):
-            if number == GRID[i][j]:
+            if number == grid[i][j]:
                 return False
 
     return True
 
 
-def solve(depth = 1):
-    global GRID
+def solve(grid, depth = 1):
     for i in range(9):
         for j in range(9):
-            if GRID[i][j] == 0:
+            if grid[i][j] == 0:
                 # count = 0
                 for number in range(1,10):
-                    if is_valid(i, j, number):
-                        GRID[i][j] = number
+                    if is_valid(grid, i, j, number):
+                        grid[i][j] = number
                         # count += 1
-                        solve(depth+1)
-                        GRID[i][j] = 0
+                        solve(grid, depth+1)
+                        grid[i][j] = 0
                 # print(count)
                 return
     print(depth)
-    print(np.matrix(GRID))
+    print(np.matrix(grid))
+
+    return np.matrix(grid)
             
-solve()
+# solve(SUDOKU_GRID)

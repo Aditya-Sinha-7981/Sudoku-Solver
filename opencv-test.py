@@ -54,7 +54,10 @@ cv2.imshow("Final Board", final_img)
 sudoku_grid = func.get_grid(final_img, CELL_SIZE)
 print(sudoku_grid)
 
-
+ans = func.solve(sudoku_grid, False)
+if ans:
+    print("We got answer")
+    print(np.matrix(sudoku_grid))
 
 
 cv2.waitKey(0)
