@@ -2,6 +2,8 @@ import cv2
 import numpy as np
 import pytesseract
 from PIL import ImageGrab
+import copy
+import subprocess
 import constants
 
 # ------------------------------------------------------------
@@ -49,18 +51,18 @@ def final_points(coords):
     return final_coords, maxWidth, maxHeight
 
 
-def get_grid(board, cell_size):
+def get_grid(board):
     grayscale = cv2.cvtColor(board, cv2.COLOR_BGR2GRAY)
     ret, threshold_img = cv2.threshold(grayscale, 127, 255, cv2.THRESH_BINARY)
-    margin = cell_size//10
+    margin = constants.CELL_SIZE//10
     final_grid = []
     for row in range(9):
         row_values = []
         for col in range(9):
-            y1 = row * cell_size + margin
-            y2 = (row + 1) * cell_size - margin
-            x1 = col * cell_size + margin
-            x2 = (col + 1) * cell_size - margin
+            y1 = row * constants.CELL_SIZE + margin
+            y2 = (row + 1) * constants.CELL_SIZE - margin
+            x1 = col * constants.CELL_SIZE + margin
+            x2 = (col + 1) * constants.CELL_SIZE - margin
             cell = threshold_img[y1:y2, x1:x2]
             white_Pixels = cv2.countNonZero(cell)
             white_ratio = white_Pixels / cell.size #getting ratio of white pixels so it becomes dynamic
@@ -133,13 +135,13 @@ def solve(grid, depth = 1):
 
 
 def solve_image(image):
-    sudoku_grid = get_grid(image, constants.CELL_SIZE)
+    sudoku_grid = get_grid(image)
+    unsolved_grid = copy.deepcopy(sudoku_grid)
     # print(sudoku_grid)
 
-    ans = solve(sudoku_grid)
-    if ans:
-        print("Solution of the sudoku grid")
-        print(np.matrix(sudoku_grid))
+    boolean_value = solve(sudoku_grid)
+
+    return unsolved_grid, sudoku_grid
 
 def get_sudoku_board(image):
     gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -182,10 +184,36 @@ def get_clipboard_image():
 
     return final_img
 
-def display_image(image, title):
+def display_image_opencv(image, title):
     cv2.imshow(title, image)
     cv2.waitKey(0)
     cv2.destroyWindow(title)
     cv2.waitKey(1) #this extra loop/wait time allows openCV to actually destroy the window and return to terminal
+
+def display_image_system(image, title):
+    subprocess.run(["open", "Solved_Sudoku_Board.png"])
+
+def draw_solution(image, unsolved_grid, solved_grid):
+    for row in range(9):
+        for col in range(9):
+            if unsolved_grid[row][col] == 0:    
+                y1 = row * constants.CELL_SIZE
+                x1 = col * constants.CELL_SIZE
+                halfSize = constants.CELL_SIZE // 2
+
+                number = solved_grid[row][col]
+
+                size, _ = cv2.getTextSize(str(number), cv2.FONT_HERSHEY_SIMPLEX, 1.0, 2)
+                fontWidth, fontHeight = size
+
+                finalX = x1 + halfSize - (fontWidth//2)
+                finalY = y1 + halfSize + (fontHeight//2)
+
+                cv2.putText(image, str(number), (finalX, finalY), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,0,0), 2)
+                
+    return image
+
+
+
 
 # ------------------------------------------------------------
