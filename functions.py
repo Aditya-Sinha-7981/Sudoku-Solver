@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import pytesseract
+from PIL import ImageGrab
+import constants
 
 # ------------------------------------------------------------
 # functions
@@ -96,7 +98,7 @@ def is_valid(grid, row, col, number):
     return True
 
 
-def solve(grid, solved, depth = 1):
+def solve(grid, depth = 1):
     for i in range(9):
         for j in range(9):
             if grid[i][j] == 0:
@@ -105,17 +107,17 @@ def solve(grid, solved, depth = 1):
                     if is_valid(grid, i, j, number):
                         grid[i][j] = number
                         # count += 1
-                        solved = solve(grid,solved, depth+1)
-                        if solved == True:
+                        solved = solve(grid, depth+1)
+                        # technically I can directly put "if solve(grid, depth+1)" but I am gonna keep this as is for my future self's sanity
+                        if solved:
                             return True
                         else:
                             grid[i][j] = 0
                 # print(count)
                 return
-    print(depth)
-    print(np.matrix(grid))
-    solved = True
-    return solved
+    print(f"Depth: {depth}")
+    # print(np.matrix(grid))
+    return True
 
 # Note to my future self since I spent way too much time figuring this out: YOU ARE ALREADY CHANGING THE GRID, SO YOU ONLY RETURN "did you solve? yes or not", THE GRID IS ALREADY CHANGED WHEN YOU SOLVE
 # THIS MEANS THE GRID THAT'S THE ANSWER WAS ALWAYS WITH YOU 
@@ -127,5 +129,63 @@ def solve(grid, solved, depth = 1):
 # print(result)
 # print(lst)
 # You changed the actual list, you do not care what function returned since actual list has already been changed
+
+
+
+def solve_image(image):
+    gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray_edged = cv2.Canny(gray_img, 30, 200)
+    contoured_approx = image.copy()
+    contours, hierarchy = cv2.findContours(gray_edged, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    board_contour = max(contours, key=cv2.contourArea)
+
+    # Opencv's drawCounters() expect a collection of contours but the max() function gave me one single contour's collection
+    board_contour_list = [board_contour]
+    # This line is not used but still here as a reminder
+
+    approx = cv2.approxPolyDP(board_contour, 0.050 * cv2.arcLength(board_contour, True), True)
+    cv2.drawContours(contoured_approx, [approx], -1, (0,0,255), 3)
+
+    for index, point in enumerate(approx):
+        x, y = point[0]
+        cv2.circle(contoured_approx, (x, y), 8, (0,255,0), -1)
+        # I used enumerate to basically get index, it's simply for loop but with index
+        cv2.putText(contoured_approx, f"P{index} ({x}, {y})", (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2)
+
+
+    ordered_coordinates = ordered_coords(approx)
+
+    # now we get transformation matrix and then transform
+
+    trans_mat = cv2.getPerspectiveTransform(ordered_coordinates, constants.DESTINATION_COORDINATES)
+    final_img = cv2.warpPerspective(image, trans_mat, (constants.BOARD_SIZE, constants.BOARD_SIZE))
+
+
+    cv2.imshow("Initial",image)
+
+    cv2.imshow("Final Board", final_img)
+
+    sudoku_grid = get_grid(final_img, constants.CELL_SIZE)
+    print(sudoku_grid)
+
+    ans = solve(sudoku_grid)
+    if ans:
+        print("We got answer")
+        print(np.matrix(sudoku_grid))
+
+    cv2.waitKey(0)
+
+    cv2.destroyAllWindows()
+
+
+def get_clipboard_image():
+    image = ImageGrab.grabclipboard()
+    print(image)
+    image_array = np.array(image)
+    print(type(image_array))
+    final_img = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
+
+    return final_img
 
 # ------------------------------------------------------------
