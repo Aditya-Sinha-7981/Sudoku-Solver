@@ -133,6 +133,15 @@ def solve(grid, depth = 1):
 
 
 def solve_image(image):
+    sudoku_grid = get_grid(image, constants.CELL_SIZE)
+    # print(sudoku_grid)
+
+    ans = solve(sudoku_grid)
+    if ans:
+        print("Solution of the sudoku grid")
+        print(np.matrix(sudoku_grid))
+
+def get_sudoku_board(image):
     gray_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     gray_edged = cv2.Canny(gray_img, 30, 200)
     contoured_approx = image.copy()
@@ -161,22 +170,7 @@ def solve_image(image):
     trans_mat = cv2.getPerspectiveTransform(ordered_coordinates, constants.DESTINATION_COORDINATES)
     final_img = cv2.warpPerspective(image, trans_mat, (constants.BOARD_SIZE, constants.BOARD_SIZE))
 
-
-    cv2.imshow("Initial",image)
-
-    cv2.imshow("Final Board", final_img)
-
-    sudoku_grid = get_grid(final_img, constants.CELL_SIZE)
-    print(sudoku_grid)
-
-    ans = solve(sudoku_grid)
-    if ans:
-        print("We got answer")
-        print(np.matrix(sudoku_grid))
-
-    cv2.waitKey(0)
-
-    cv2.destroyAllWindows()
+    return final_img
 
 
 def get_clipboard_image():
@@ -187,5 +181,11 @@ def get_clipboard_image():
     final_img = cv2.cvtColor(image_array, cv2.COLOR_RGB2BGR)
 
     return final_img
+
+def display_image(image, title):
+    cv2.imshow(title, image)
+    cv2.waitKey(0)
+    cv2.destroyWindow(title)
+    cv2.waitKey(1) #this extra loop/wait time allows openCV to actually destroy the window and return to terminal
 
 # ------------------------------------------------------------
