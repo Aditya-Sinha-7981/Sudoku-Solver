@@ -48,6 +48,6 @@ def solve(grid, depth = 1):
     print(depth)
     print(np.matrix(grid))
 
-    return np.matrix(grid)
+    return
             
 # solve(SUDOKU_GRID)

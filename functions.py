@@ -51,27 +51,81 @@ def final_points(coords):
     return final_coords, maxWidth, maxHeight
 
 
+# def get_grid(board):
+#     grayscale = cv2.cvtColor(board, cv2.COLOR_BGR2GRAY)
+#     ret, threshold_img = cv2.threshold(grayscale, 127, 255, cv2.THRESH_BINARY)
+#     margin = constants.CELL_SIZE//10
+#     final_grid = []
+#     for row in range(9):
+#         row_values = []
+#         for col in range(9):
+#             y1 = row * constants.CELL_SIZE + margin
+#             y2 = (row + 1) * constants.CELL_SIZE - margin
+#             x1 = col * constants.CELL_SIZE + margin
+#             x2 = (col + 1) * constants.CELL_SIZE - margin
+#             cell = threshold_img[y1:y2, x1:x2]
+#             white_Pixels = cv2.countNonZero(cell)
+#             white_ratio = white_Pixels / cell.size #getting ratio of white pixels so it becomes dynamic
+#             if white_ratio < 0.95:
+#                 number = int((get_digit(cell)).strip())
+#             else:
+#                 number = 0
+#             row_values.append(number)
+#         final_grid.append(row_values)
+#     return final_grid
+
 def get_grid(board):
     grayscale = cv2.cvtColor(board, cv2.COLOR_BGR2GRAY)
-    ret, threshold_img = cv2.threshold(grayscale, 127, 255, cv2.THRESH_BINARY)
-    margin = constants.CELL_SIZE//10
+
+    # Remove tiny anti-aliasing artifacts
+    grayscale = cv2.GaussianBlur(grayscale, (3, 3), 0)
+
+    # Adaptive threshold works much better for screenshots
+    threshold_img = cv2.adaptiveThreshold(
+        grayscale,
+        255,
+        cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY,
+        11,
+        2
+    )
+
+    margin = constants.CELL_SIZE // 10
     final_grid = []
+
     for row in range(9):
         row_values = []
+
         for col in range(9):
             y1 = row * constants.CELL_SIZE + margin
             y2 = (row + 1) * constants.CELL_SIZE - margin
             x1 = col * constants.CELL_SIZE + margin
             x2 = (col + 1) * constants.CELL_SIZE - margin
+
             cell = threshold_img[y1:y2, x1:x2]
-            white_Pixels = cv2.countNonZero(cell)
-            white_ratio = white_Pixels / cell.size #getting ratio of white pixels so it becomes dynamic
-            if white_ratio < 0.95:
-                number = int((get_digit(cell)).strip())
+
+            white_pixels = cv2.countNonZero(cell)
+            white_ratio = white_pixels / cell.size
+
+            if white_ratio < 0.99:
+                # cv2.imshow("cell", cell)
+                # cv2.waitKey(0)
+                text = get_digit(cell).strip()
+                print(row, col, text)
+
+                if text.isdigit():
+                    number = int(text)
+                else:
+                    number = 0
+                    print(text)
+                    cv2.imwrite("failed.png", cell)
             else:
                 number = 0
+
             row_values.append(number)
+
         final_grid.append(row_values)
+
     return final_grid
 
 
@@ -138,6 +192,8 @@ def solve_image(image):
     sudoku_grid = get_grid(image)
     unsolved_grid = copy.deepcopy(sudoku_grid)
     # print(sudoku_grid)
+
+    unsolved_grid = sudoku_grid.copy()
 
     boolean_value = solve(sudoku_grid)
 
@@ -210,7 +266,7 @@ def draw_solution(image, unsolved_grid, solved_grid):
                 finalY = y1 + halfSize + (fontHeight//2)
 
                 cv2.putText(image, str(number), (finalX, finalY), cv2.FONT_HERSHEY_SIMPLEX, 1.5, (0,0,0), 2)
-                
+
     return image
 
 

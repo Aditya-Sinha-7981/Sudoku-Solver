@@ -25,10 +25,15 @@ It started as a simple backtracking solver, but somewhere along the way it turne
 - [x] Sudoku board detection
 - [x] Perspective transformation
 - [x] Cell extraction
-- [ ] OCR integration
-- [ ] Sudoku solving
-- [ ] Overlay solved board back onto the original image
+- [X] OCR integration
+- [X] Sudoku solving
+- [X] Overlay solved board back onto the original image
+- [] Train CNN classifier and integrate it
 
 ## Why?
 
 Mostly because I enjoy Sudoku and wanted to build something that combines computer vision with a classic algorithm. It also turned out to be a great excuse to learn OpenCV from scratch.
+
+## Some notes
+
+I used tesseract OCR for this but it's unable to detect the number properly and reliably, I have tweaked with the config multiple times but it's always unable to properply recognize a "1" or sometimes even "8", as such I have decided to train a tiny CNN classifier for this purpose.
